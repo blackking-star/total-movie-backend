@@ -29,7 +29,7 @@ bot = Client(
 async def home():
     return jsonify({"status": "Server is running smoothly!"})
 
-# নতুন রাউট: চ্যানেল থেকে অটো মুভি লিস্ট ফেচ করার জন্য
+# সঠিক লুপ ভিত্তিক মুভি লিস্ট ফেচ করার রাউট
 @app.route('/api/movies/<string:channel>', methods=['GET'])
 async def get_movies(channel):
     try:
@@ -37,15 +37,22 @@ async def get_movies(channel):
             await bot.start()
         
         movies = []
-        # চ্যানেল থেকে লেটেস্ট ৫০টি মেসেজ চেক করা হচ্ছে
-        async for message in bot.get_chat_history(channel, limit=50):
-            if message.video or (message.document and message.document.mime_type and "video" in message.document.mime_type):
-                # ক্যাপশন বা ফাইলের নাম থেকে টাইটেল নেওয়া
-                title = message.caption or (message.video.file_name if message.video else f"Movie ID {message.id}")
-                movies.append({
-                    "id": message.id,
-                    "title": title[:60] # নামের বড় অংশ কেটে ছোট করে নেওয়া
-                })
+        latest_id = 3345  # আপনার চ্যানেলের শেষ ভিডিও আইডি
+        
+        for msg_id in range(latest_id, latest_id - 30, -1):
+            if msg_id < 1:
+                break
+            try:
+                message = await bot.get_messages(channel, msg_id)
+                if message and (message.video or (message.document and message.document.mime_type and "video" in message.document.mime_type)):
+                    title = message.caption or (message.video.file_name if message.video else f"Movie ID {message.id}")
+                    movies.append({
+                        "id": message.id,
+                        "title": title[:60]
+                    })
+            except Exception:
+                continue
+
         return jsonify(movies)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
