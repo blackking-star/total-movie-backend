@@ -29,7 +29,7 @@ bot = Client(
 async def home():
     return jsonify({"status": "Server is running smoothly!"})
 
-# সঠিক লুপ ভিত্তিক মুভি লিস্ট ফেচ করার রাউট
+# দ্রুত ও অপ্টিমাইজড মুভি লিস্ট ফেচ করার রাউট
 @app.route('/api/movies/<string:channel>', methods=['GET'])
 async def get_movies(channel):
     try:
@@ -39,7 +39,8 @@ async def get_movies(channel):
         movies = []
         latest_id = 3345  # আপনার চ্যানেলের শেষ ভিডিও আইডি
         
-        for msg_id in range(latest_id, latest_id - 30, -1):
+        # সাম্প্রতিক ৪০টি মেসেজ চেক করা হচ্ছে যাতে দ্রুত লিস্ট চলে আসে
+        for msg_id in range(latest_id, latest_id - 40, -1):
             if msg_id < 1:
                 break
             try:
@@ -57,6 +58,7 @@ async def get_movies(channel):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# সুপার ফাস্ট ভিডিও স্ট্রিমিং রাউট
 @app.route('/stream/<string:channel>/<int:msg_id>', methods=['GET'])
 async def stream_video(channel, msg_id):
     try:
