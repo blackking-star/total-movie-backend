@@ -29,19 +29,40 @@ bot = Client(
 async def home():
     return jsonify({"status": "Server is running smoothly!"})
 
+# নতুন রাউট: চ্যানেল থেকে অটো মুভি লিস্ট ফেচ করার জন্য
+@app.route('/api/movies/<string:channel>', methods=['GET'])
+async def get_movies(channel):
+    try:
+        if not bot.is_connected:
+            await bot.start()
+        
+        movies = []
+        # চ্যানেল থেকে লেটেস্ট ৫০টি মেসেজ চেক করা হচ্ছে
+        async for message in bot.get_chat_history(channel, limit=50):
+            if message.video or (message.document and message.document.mime_type and "video" in message.document.mime_type):
+                # ক্যাপশন বা ফাইলের নাম থেকে টাইটেল নেওয়া
+                title = message.caption or (message.video.file_name if message.video else f"Movie ID {message.id}")
+                movies.append({
+                    "id": message.id,
+                    "title": title[:60] # নামের বড় অংশ কেটে ছোট করে নেওয়া
+                })
+        return jsonify(movies)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/stream/<string:channel>/<int:msg_id>', methods=['GET'])
 async def stream_video(channel, msg_id):
     try:
         if not bot.is_connected:
             await bot.start()
-        
+
         message = await bot.get_messages(channel, msg_id)
         if not message or not message.video:
             return jsonify({"error": "Video file not found in channel"}), 404
-            
+
         video = message.video
         file_size = video.file_size
-        
+
         async def generate():
             async for chunk in bot.stream_media(message):
                 yield chunk
@@ -52,7 +73,7 @@ async def stream_video(channel, msg_id):
             'Content-Length': str(file_size),
             'Access-Control-Allow-Origin': '*'
         }
-        
+
         return await generate(), 200, headers
     except Exception as e:
         return jsonify({"error": str(e)}), 500
