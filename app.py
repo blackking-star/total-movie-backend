@@ -1,4 +1,12 @@
 import os
+import asyncio
+
+# Fix for Python event loop issue with Pyrogram
+try:
+    asyncio.get_event_loop()
+except RuntimeError:
+    asyncio.set_event_loop(asyncio.new_event_loop())
+
 from quart import Quart, jsonify, request
 from quart_cors import cors
 from pyrogram import Client
