@@ -14,12 +14,12 @@ from pyrogram import Client
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
-API_ID = int(os.environ.get("API_ID"))
-API_HASH = os.environ.get("API_HASH")
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+API_ID = int(os.environ.get("API_ID", 0))
+API_HASH = os.environ.get("API_HASH", "")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 
 bot = Client(
-    "total_movie_stream_bot",
+    "netflix_movie_bot",
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN
@@ -27,7 +27,7 @@ bot = Client(
 
 @app.route('/')
 async def home():
-    return jsonify({"status": "Server is running smoothly!"})
+    return jsonify({"status": "Netflix OTT Backend is running smoothly!"})
 
 # দ্রুত ও অপ্টিমাইজড মুভি লিস্ট ফেচ করার রাউট
 @app.route('/api/movies/<string:channel>', methods=['GET'])
@@ -39,8 +39,7 @@ async def get_movies(channel):
         movies = []
         latest_id = 3345  # আপনার চ্যানেলের শেষ ভিডিও আইডি
         
-        # সাম্প্রতিক ৪০টি মেসেজ চেক করা হচ্ছে যাতে দ্রুত লিস্ট চলে আসে
-        for msg_id in range(latest_id, latest_id - 40, -1):
+        for msg_id in range(latest_id, latest_id - 50, -1):
             if msg_id < 1:
                 break
             try:
@@ -67,7 +66,7 @@ async def stream_video(channel, msg_id):
 
         message = await bot.get_messages(channel, msg_id)
         if not message or not message.video:
-            return jsonify({"error": "Video file not found in channel"}), 404
+            return jsonify({"error": "Video not found"}), 404
 
         video = message.video
         file_size = video.file_size
